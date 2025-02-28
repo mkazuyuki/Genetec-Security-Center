@@ -20,7 +20,7 @@
    3. Go to *Security/Logins*. Confirm if `sa` user is in Disabled status.
    4. If disabled, open **Login Properties** of *sa* user. Go to *Status*. Select `Enabled` for *Login* then click *OK*.
 
-3. Configuring Security Center to add an RTSP video
+3. Configuring Security Center, adding an RTSP video stream as an example
 
    1. Open `http://localhost/Genetec/` and login to *Security Center Server Admin*
    2. Install the license.
@@ -38,21 +38,27 @@
       - rtsp://`10.0.0.10/live` (assuming RTSP server runs on 10.0.0.10)
       - *Authentication*: `Default logon`
 
-## Configuring Security Center Server for the cluster
+## Configuring services for the cluster
 
 You must make some changes to Security Center Server to be protected with failover by the cluster.
 
-Before configuring, Stop Security Center services and set the *Startup Type* of them into *Manual startup*.
+Before configuring, Stop Security Center services and set the *Startup Type* of them into *Manual startup*. Open *cmd.exe* then issue the following commands
 
 ```bat
 sc qc     GenetecServer
 sc stop   GenetecServer
 sc config GenetecServer   start= demand
 sc qc     GenetecServer
+
 sc qc     GenetecWatchdog
 sc stop   GenetecWatchdog
 sc config GenetecWatchdog start= demand
 sc qc     GenetecWatchdog
+
+sc qc     MSSQL$SQLEXPRESS
+sc stop   MSSQL$SQLEXPRESS
+sc config MSSQL$SQLEXPRESS start= demand
+sc qc     MSSQL$SQLEXPRESS
 ```
 
 **To configure Security Center Server for the cluster:**
@@ -76,19 +82,6 @@ As part of configuring Security Center Server for a clustered environment, you m
    4. Minimize, but don't close the Services window.
    -->
 
-   open *cmd.exe* then issue the following commands
-
-   ```bat
-   sc qc     GenetecServer
-   sc stop   GenetecServer
-   sc config GenetecServer start= demand
-   sc qc     GenetecServer
-   sc qc     GenetecWatchdog
-   sc stop   GenetecWatchdog
-   sc config GenetecWatchdog start= demand
-   sc qc     GenetecWatchdog
-   ```
-
 2. Move the Genetec™ Server's license file (*license.gconfig*) from *C:\Program Files (x86)\Genetec Security Center 5.12\ConfigurationFiles* to the Security Center root folder (*C:\Program Files (x86)\Genetec Security Center 5.12*).
 3. Using Notepad, paste the following text into an empty text file:
 
@@ -103,12 +96,11 @@ As part of configuring Security Center Server for a clustered environment, you m
 
 4. Save the text file with the name *ConfigurationPath.gconfig* in your Security Center root folder (*C:\Program Files (x86)\Genetec Security Center 5.12*)
 5. Repeat the steps on your standby server.
+6. Copy the folder *ConfigurationFiles* in the Security Center root folder on the active server to the mirrored data drive.
 
    ```bat
-   robocopy 'C:\Program Files (x86)\Genetec Security Center 5.12\ConfigurationFiles' N:\Genetec Security Center 5.12\ConfigurationFiles
+   robocopy 'C:\Program Files (x86)\Genetec Security Center 5.12\ConfigurationFiles' 'N:\Genetec Security Center 5.12\ConfigurationFiles'
    ```
-
-6. Copy the folder *ConfigurationFiles* in the Security Center root folder on the active server to the mirrored data drive.
 
 A supplementary server configuration file called *ConfigurationPath.gconfig* is created. This file tells the server to look in an alternative path for your configuration files (the mirrored data drive) and an alternative path for
 the server license.
@@ -120,8 +112,8 @@ the Genetec™ Watchdog service trying to start or stop the Genetec™ Server se
 
 **To stop the Genetec™ Watchdog service from restarting the Genetec™ Server service:**
 
-1. Use Notepad to open the file GenetecWatchdog.gconfig found in the path `N:\Genetec Security Center 5.11\ConfigurationFiles`.
-2. Edit the file to include the string: preventServiceRestart="true".
+1. Use Notepad to open the file GenetecWatchdog.gconfig found in the path `N:\Genetec Security Center 5.12\ConfigurationFiles`.
+2. Edit the file to include the string: `preventServiceRestart="true"`.
 The third line now reads:
 
    ```xml
@@ -141,33 +133,37 @@ standby server.
 To configure the SQL Server for the cluster:
 
 1. On both servers, stop the Genetec™ Watchdog service and the Genetec™ Server service as follows:
-   a) Click Start > Control Panel > Administrative Tools > Services
-   b) Select the Genetec™ Watchdog service and click Stop Service on the toolbar at the top of the page.
-   c) Double-click the Genetec™ Watchdog service and set the Startup Type to Manual .
-   d) Select the Genetec Server service and click Stop Service on the toolbar at the top of the page.
-   e) Double-click the Genetec™ Server service and set the Startup Type to Manual.
+   1. Click Start > Control Panel > Administrative Tools > Services
+   2. Select the Genetec™ Watchdog service and click Stop Service on the toolbar at the top of the page.
+   3. Double-click the Genetec™ Watchdog service and set the Startup Type to Manual .
+   4. Select the Genetec Server service and click Stop Service on the toolbar at the top of the page.
+   5. Double-click the Genetec™ Server service and set the Startup Type to Manual.
+   6. Double-click the SQL Server (SQLEXPRESS) and set the Startup Type to Manual.
 2. In SQL Management Studio, you will need detach all Security Center databases before the database files can be moved to your mirrored data partition. Detaching a database removes it from the instance of the Microsoft SQL Server but leaves intact the database, with its data files and transaction log files.
-   a) Open SQL Management Studio and connect to the Security Center database instance (by default the instance name is SQLEXPRESS)
-   b) Right click on each one of the Security Center databases and select `Task` > `Detach`.
-3. Move the Security Center \*.MDF and \*.LDF database files from their default folder (*C:/Program Files/Microsoft SQL Server/MSSQL10_50.SQLEXPRESS/MSSQL/DATA*) to the SQL folder on the mirror partition created earlier (*N:/MSSQL/DATA*).
+   1. Open SQL Management Studio and connect to the Security Center database instance (by default the instance name is SQLEXPRESS)
+   2. Right click on each one of the Security Center databases and select `Task` > `Detach`.
+3. Move the Security Center \*.MDF and \*.LDF database files from their default folder (*C:\Program Files\Microsoft SQL Server\MSSQL16.SQLEXPRESS\MSSQL\DATA*) to the SQL folder on the mirror partition created earlier (*N:/MSSQL/DATA*).
 4. Stop the SQL service on both servers.
 5. Using SQL Server Configuration Manager, modify the SQL startup parameters for the master database on both servers.
-   a) Open your SQL Server Configuration Manager.
-   b) Select **SQL Server Services** in the pane on the left.
-   c) Right-click on **SQL Server (SQLEXPRESS)** and select **Properties**.
-   d) Select the **Advanced** tab in the **SQL Server (SQLEXPRESS) Properties** window.
-   e) Modify the field **Startup Parameters** to point to the new master database path.
 
-      In this example we have modified the startup parameters to: `-dN:/MSSQL/Data/master.mdf;-eN:/MSSQL/Data/Log/ERRORLOG;-lN:/MSSQL/mastlog.ldf`,
+   1. Open your SQL Server Configuration Manager.
+   2. Select **SQL Server Services** in the pane on the left.
+   3. Right-click on **SQL Server (SQLEXPRESS)** and select **Properties**.
+   4. Select the **Advanced** tab in the **SQL Server (SQLEXPRESS) Properties** window.
+   5. Double click and modify the field **Startup Parameters** to point to the new master database path.
+
+      In this example I have modified the startup parameters to: `-dN:\MSSQL\DATA\master.mdf;-eN:\MSSQL\Log\ERRORLOG;-lN:\MSSQL\DATA\mastlog.ldf`,
       whereby the field points to the new (mirrored) drive and folder path of our master database (*N:/MSSQL/Data*).
 
 6. Move the master database (master.mdf and master.ldf) for the active server to the SQL folder on the
-mirror partition created earlier (*N:/MSSQL/DATA**). Delete the master database (master.mdf and master.ldf)
+mirror partition created earlier (*N:/MSSQL/DATA*). Delete the master database (master.mdf and master.ldf)
 on the standby server (it will be replicated from the active server).
+   - Do the same for *model*, *msdb*, and *tempdb* databases.
 7. Restart SQL service on both servers.
 8. Reconnect SQL Management studio to SQL server for the active server.
 9. Re-attach the Security Center databases.
-10. When prompted to point to the database to be attached, use the Add button to browse to the new path of
+   - Right-click on **Databases** and select **Attach**.
+10. When prompted to point to the database to be attached, use the **Add** button to browse to the new path of
 your (moved) master database.
 
     **IMPORTANT**: This step needs to be performed on the standby server as well but it is not possible at this
@@ -178,8 +174,37 @@ your (moved) master database.
 
 ## Configuring NEC ExpressCluster
 
+On both servers, copy ECX license files, then run ECX installer.
+
+After the ECX installation, issue the following commands in the command prompt to install the cluster license file and to add the firewall rule.
+
+```bat
+cd THE_FOLDER_CONTAINING_THE_CLUSTER_LICENSE_FILE
+clplcnsc -i .\*
+clpfwctrl --add
+```
+
 ### Creating the cluster
+
+Configure one failover group and add the following resources to the group.
+
+- Mirror disk resource
+- Service resource for *SQL Server (SQLEXPRESS)* service
+- Service resource for *Genetec Watchdog* service
+
+  Configure it to depend on the service resource for *SQL Server* service.
+
+- Service resource for *Genetec™ Server* service
+
+  Configure it to depend on the service resource for *Genetec Watchdog* service.
+
+  **IMPORTANT** : For the *Service Name*, configure not `Genetec™ Server` but `GenetecServer`. Trademark symbols are not allowed in the *Service Name*.
 
 ## Cluster configuration tests
 
+- On active server, open *Genetec Config Tool*  > *System* > *Roles* > select each Roles > *Resources*
+
+  Try `localhost\SQLEXPRESS` if you see a trouble for database connection.
+
+---
 Copyright Miyamoto Kazuyuki 2025
