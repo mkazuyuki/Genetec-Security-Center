@@ -1,5 +1,16 @@
 ﻿# Genetec Security Center and EXPRESSCLUSTER Quick Start Guide
 
+This document describes step by step instruction to integrate Genetec Security Center with EXPRESSCLUSTER.
+
+## Versions
+
+- Genetec Security Center 5.12
+  - Microsoft SQL Server 2022 Express
+- EXPRESSCLUSTER X 5.2 for Windows
+- Windows Server 2022
+
+## Installing & Configuring Security Center
+
 1. Installing Security Center
 
    1. Execute `setup.exe`
@@ -176,11 +187,14 @@ your (moved) master database.
 
 On both servers, copy ECX license files, then run ECX installer.
 
-After the ECX installation, issue the following commands in the command prompt to install the cluster license file and to add the firewall rule.
+After the ECX installation, issue the following commands in the command prompt to install the cluster license files and to add the firewall rules.
 
 ```bat
+REM Installing the license files
 cd THE_FOLDER_CONTAINING_THE_CLUSTER_LICENSE_FILE
 clplcnsc -i .\*
+
+REM Adding the firewall rules
 clpfwctrl --add
 ```
 
@@ -202,7 +216,7 @@ Configure one failover group and add the following resources to the group.
 
 ## Cluster configuration tests
 
-- On active server, open *Genetec Config Tool*  > *System* > *Roles* > select each Roles > *Resources*
+- On active server, open *Genetec Config Tool* > *System* > *Roles* > select each Roles > *Resources*
 
   Try `localhost\SQLEXPRESS` if you see a trouble for database connection.
 
