@@ -1,6 +1,6 @@
 ﻿# Genetec Security Center and EXPRESSCLUSTER Quick Start Guide
 
-This document describes step by step instruction to integrate Genetec Security Center with EXPRESSCLUSTER.
+This guide describes how to install and upgrade Genetec Security Center on a high availability cluster using EXPRESSCLUSTER.
 
 ## Versions
 
@@ -9,7 +9,131 @@ This document describes step by step instruction to integrate Genetec Security C
 - EXPRESSCLUSTER X 5.2 for Windows
 - Windows Server 2022
 
-## Installing & Configuring Security Center
+## EXPRESSCLUSTER for Security Center
+
+EXPRESSCLUSTER provides synchronous data mirroring between two servers.
+Fast application recovery and data protection is ensured in case of a system failure.
+Clustering ensures that your Security Center server’s configuration files and database files found on one server are mirrored on another server.
+A virtual IP address is used to accept incoming client connections. The cluster then monitors the active server’s hardware and software. If a failure is detected, the cluster replaces the active server with the standby server so that the system remains online.
+Clients do not know whether the active server or the standby server is managing the system as they are still connected to the same IP address.
+
+![Cluster structure](image1.png)
+
+## EXPRESSCLUSTER terminology
+
+The following terms are used to describe the components of EXPRESSCLUSTER
+
+| Term | Description |
+|--    |--           |
+| Public network | The network hosting the Security Center server and clients. |
+| Private network | Also known as *Interconnect network* The dedicated link connection the two clustered servers together. |
+| Active node | The clustered server actively managing Security Center. |
+| Standby node | The clustered server waiting on standby. |
+| Heartbeat | A signal that servers in a cluster send to each other to detect a failure in the cluster. |
+
+## Server requirements for EXPRESSCLUSTER
+
+Your servers should be identical in terms of hardware, operating system, and software.
+EXPRESSCLUSTER, SQL server, and Security Center each have their own set of minimum requirements.
+The following table lists the minimum requirements as a combination of all three:
+
+| Component | Requirements |
+|--         |--            |
+| CPU and memory | Refer to the Security Center System Requirements (<https://resources.genetec.com/system-requirements>) for the most recent version of this document. |
+| Operating system | Refer to EXPRESSCLUSTER System Requirements. **NOTE**: English and Japanese operating systems are only supported by EXPRESSCLUSTER.|
+| Disk partitions | Each server will need two identically configured disk partitions (apart from C:/). One for the cluster partition (1 GB RAW) and one for the mirrored partition (40 GB or more NTFS). These partitions should not be on the same physical disk as the operating system and software, so two physical hard drives are required. **IMPORTANT**: For systems with more than 1,000 entities (cameras, doors, cardholders, etc) three physical hard drives are required for performance reasons. |
+| Network cards | Each server will need two network cards. One to accept external client connections and the other for the cluster’s interconnection. 1Gb/s cards are recommended. |
+| SQL Server | SQL Server Express is bundled on the Security Center download package. But for installations where the database size will grow over 10 GB (very rare), two copies of SQL Standard or Enterprise will be needed. |
+| Database management tool | SQL Management Studio needs to be installed on both servers. |
+
+<!--
+## Security Center system requirements
+
+For Security Center to perform as expected, the following hardware and software components are required. To determine which configuration is best suited for your application, contact Genetec Sales Engineering team at <salesengineering@genetec.com>.
+-->
+
+## Planning checklist for EXPRESSCLUSTER
+
+You will need to know the following information before starting your cluster installation.
+
+| Cluster component | Description | Your system |
+|--                 |--           |--             |
+| Cluster name | Name of the cluster configuration.||
+| Failover group name | Name of the failover group ||
+| Floating IP | Static IP address used by clients to access Security Center services within the cluster. ||
+| Cluster partition | Drive letter for the cluster partition of the mirrored disk ||
+| Data partition | Drive letter for the data partition of the mirrored disk ||
+| Virtual computer name | Name to be used to access the server (Active or Standby) currently hosting the Security Center services. ||
+| Active Node name | Name of the active server used in cluster configurations. ||
+| Active Node Public IP address | Static IP address used in the public IP network. ||
+| Active Node Public Subnet mask | Subnet mask used in the public IP network. ||
+| Active Node Public Default Gateway | Default Gateway used in the public IP network. ||
+| Active Node Public Preferred DNS server address | Static IP address of the Preferred DNS server in the public IP network. ||
+| Active Node Private IP | Static IP address used in the interconnect IP network. ||
+| Active Node Private Subnet mask | Subnet mask used in the interconnect IP network. ||
+| Standby Node Name | Name used for identification in the cluster configuration. ||
+| Standby Node Public IP | Static IP address used in the public IP network. ||
+| Standby Node Public Subnet mask | Subnet mask used in the public IP network. ||
+| Standby Node Public Default Gateway | Default Gateway used in the public IP network. ||
+| Standby Node Public preferred DNS server |  Static IP address of the Preferred DNS server in the public IP network. ||
+| Standby Node Private IP | Static IP address used in the interconnect IP network. ||
+| Standby Node Private Subnet mask | Subnet mask used in the interconnect IP network. ||
+
+## Preparing servers for clustering
+
+Before installing EXPRESSCLUSTER, you must prepare the servers.
+
+### To prepare your servers for clustering
+
+1. Make sure that each server has two network cards and two physical hard disks.
+2. Configure your first hard disk with one partition only. It will be used for your operating system and software.
+3. Configure your second hard disk with two partitions. One is called the cluster partition (1 GB raw) and the other is called the data partition (40 GB or more, NTFS). The data partition will contain Security Center’s SQL database files as well as the server’s configuration files. This data will be mirrored between the two servers.  
+**IMPORTANT**:  Not only must the partitions be identical on both servers, but the drive letters assigned must also be identical.
+4. Create the following folders on the data partition for mirroring:
+
+   - N:\Genetec Security Center 5.11\ConfigurationFiles
+   - N:\MSSQL\DAT
+   - N:\VertX
+
+   **NOTE**:  In this example “N:” is the drive letter assigned to your mirrored data partition. The folder N:\VertX is only necessary if you are using HID VertX controllers.
+5. If your system has more than 1,000 entities, or requires extensive reporting, a third disk should be configured with another cluster partition and data partition. SQL’s \*.ldf files will be clustered from one disk and SQL’s \*.mdf files will be clustered from another physical disk. This step is added for performance stability in larger systems.
+6. Install the same operating system on both servers.
+7. In Windows, rename the first network card as “Public”. This is the network interface that will accept incoming client connections. Repeat on the second server.
+8. Rename the second network card as “Private”. This is for the dedicated interconnection
+ between the two clustered servers. Repeat on the second server.
+9. On each server, configure the Public network card to use the same IP subnet.
+10. On each server, configure Private network card to use the same IP subnet.
+11. Disable all network card features of the *Private* NIC except TCP/IP version 4 (and, if it appears in the list, the driver).
+   ![NIC Properties](image2.png)
+12. From the command line, test whether the two servers nodes can *ping* each other over their public interface and over their private interface.
+<!--
+9. Order the Public and Private network interfaces as follows:
+ **IMPORTANT**:  The network interface on the Private network must be Window’s first available network
+ interface.
+   1. Log on to the first node in the cluster using an administrative Windows account.
+   2. Click Start > Run, and type ncpa.cpl.
+   3. In the Network Connections window, click the Advanced menu, and then click Advanced settings.  
+      **TIP**:  If the Advanced menu does not appear at the top of the window, press Alt.
+   4. In the Connections list, select the Private network connection, and use the arrow buttons on the right to bring it to the top of the list.
+   5. Click OK.
+   6. Repeat the steps on all remaining cluster nodes.
+-->
+
+## Best practices for installing EXPRESSCLUSTER
+
+It is assumed that you are familiar with the concept of clustering and how to install and configure the EXPRESSCLUSTER X for Windows.
+When installing the EXPRESSCLUSTER software, keep the following points in mind:
+
+- EXPRESSCLUSTER can be set up with several different configurations. Note that we are using its High availability cluster configuration using mirror disks with 2 nodes.
+- The EXPRESSCLUSTER should be installed on the servers’ C:/ drive, not a mirrored disk.
+- The identical folder path is required on both servers for the EXPRESSCLUSTER installation.
+- The EXPRESSCLUSTER licenses key files will be required after the installation.
+
+For more information about the EXPRESSCLUSTER X for Windows, see the NEC documentation supplied with the EXPRESSCLUSTER software, or available at <https://www.nec.com/en/global/prod/expresscluster/en/doc/manual.html> or <http://support.necam.com/EnterpriseSW/EC>
+
+## Installing Security Center Server for EXPRESSCLUSTER
+
+After the EXPRESSCLUSTER software has been installed, you must install Security Center Server and SQL Server on your active server first, and then on your standby server.
 
 1. Installing Security Center
 
@@ -31,7 +155,7 @@ This document describes step by step instruction to integrate Genetec Security C
    3. Go to *Security/Logins*. Confirm if `sa` user is in Disabled status.
    4. If disabled, open **Login Properties** of *sa* user. Go to *Status*. Select `Enabled` for *Login* then click *OK*.
 
-3. Configuring Security Center, adding an RTSP video stream as an example
+3. Configuring Security Center
 
    1. Open `http://localhost/Genetec/` and login to *Security Center Server Admin*
    2. Install the license.
@@ -39,15 +163,42 @@ This document describes step by step instruction to integrate Genetec Security C
       1. Click the hostname in left pane.
       2. Select `SQL Server` as *Authentication* (change from *Windows*).
       3. Input `Password-0` as *Password* for example.
-   4. Open *Genetec Config Tool*. `admin` with no password is used for first time login.
-   5. Set admin password `Password-0` (example).
-   6. Go to *Tasks*` > *Video*
-   7. Click *+Video unit*, set followings then *Add and close*
+
+4. Configuring Security Center - Optionally adding an RTSP video stream as an example
+
+   1. Open *Genetec Config Tool*. `admin` with no password is used for first time login.
+   2. Set admin password `Password-0` (example).
+   3. Go to *Tasks*` > *Video*
+   4. Click *+Video unit*, set followings then *Add and close*
   
       - *Manufacturer*: `Generic Stream`
       - *Product type*: `*RTSP(No ping)`
       - rtsp://`10.0.0.10/live` (assuming RTSP server runs on 10.0.0.10)
       - *Authentication*: `Default logon`
+
+      Installation and configuration of the RTSP server is described [here](vCamera.md).
+
+## Upgrading Security Center
+
+To upgrade Security Center in an EXPRESSCLUSTER environment, you must disable automatic failover for the
+ EXPRESSCLUSTER, and then upgrade Security Center on the active and standby servers.
+
+### Before you begin
+
+You must have the same ConfigurationFiles folder on both the mirrored and local hard drives.
+
+1. As a backup, Copy the ConfigurationFiles folder from the mirrored drive (N:Genetec Security Center 5.12\ConfigurationFiles) to your local drive (C:\Program Files (x86)\Genetec Security Center 5.12\ConfigurationFiles).
+2. Repeat for each node in your NEC cluster.
+
+   **NOTE***: In this example “N:” corresponds to the drive letter assigned to your mirrored data partition. The actual drive letter will depend on your EXPRESSCLUSTER.
+
+### To upgrade Security Center
+
+1. Open *Cluster WebUI*.
+2. Prepare the status that the failover group is running on the primary server.
+3. Stop *service-MSSQL*, then *service-GenetecServer* and *service-GenetecWatchdog* are also stopped and are in Offline status, and *md1* remains in *Online* status.
+4. Upgrade the Security Center.
+5. Move the failover group to the secondary server, then confirm the mirror disk resource *md1* only in active status.
 
 ## Configuring services for the cluster
 
@@ -183,7 +334,7 @@ your (moved) master database.
 
 11. Make sure that all the databases that were previously detached are re-attached.
 
-## Configuring NEC ExpressCluster
+## Configuring EXPRESSCLUSTER
 
 On both servers, copy ECX license files, then run ECX installer.
 
@@ -200,25 +351,31 @@ clpfwctrl --add
 
 ### Creating the cluster
 
-Configure one failover group and add the following resources to the group.
+1. On the active node, open *WebUI* of EXPRESSCLUSTER by opening a web browser and access to <http://localhost:29003>
+2. Start *Cluster generation wizard*.
 
-- Mirror disk resource
-- Service resource for *SQL Server (SQLEXPRESS)* service
-- Service resource for *Genetec Watchdog* service
+   Configure one failover group and add the following resources to the group.
 
-  Configure it to depend on the service resource for *SQL Server* service.
+   - Mirror disk resource. Name it *md1*.
+   - Service resource for *SQL Server (SQLEXPRESS)* service. Name it *service-MSSQL*.
+   - Service resource for *Genetec Watchdog* service. Name it *service-GenetecWatchdog*
 
-- Service resource for *Genetec™ Server* service
+     Configure it to depend on the service resource for *SQL Server* service.
 
-  Configure it to depend on the service resource for *Genetec Watchdog* service.
+   - Service resource for *Genetec™ Server* service. Name it *service-GenetecServer*.
 
-  **IMPORTANT** : For the *Service Name*, configure not `Genetec™ Server` but `GenetecServer`. Trademark symbols are not allowed in the *Service Name*.
+     Configure it to depend on the service resource for *Genetec Watchdog* service.
+
+     **NOTE** : For the *Service Name*, configure not `Genetec™ Server` but `GenetecServer`. Trademark symbols are not allowed in the *Service Name*.
 
 ## Cluster configuration tests
 
-- On active server, open *Genetec Config Tool* > *System* > *Roles* > select each Roles > *Resources*
-
-  Try `localhost\SQLEXPRESS` if you see a trouble for database connection.
+- If you see a trouble for database connection. On active server, open *Genetec Config Tool* > *System* > *Roles* > select each Roles > *Resources* > Try `localhost\SQLEXPRESS`
+- Move and move back the failover group between the servers.
+- A state transition test
+  1. Power off the primary server. Then see if the failover is successfully processed.
+  2. Power on the primary server. Then see if the server is successfully comeback to the cluster.
+  3. Move back the failover group.
 
 ---
 Copyright Miyamoto Kazuyuki 2025
