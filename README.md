@@ -180,8 +180,7 @@ After the EXPRESSCLUSTER software has been installed, you must install Security 
 
 ## Upgrading Security Center
 
-To upgrade Security Center in an EXPRESSCLUSTER environment, you must disable automatic failover for the
- EXPRESSCLUSTER, and then upgrade Security Center on the active and standby servers.
+To upgrade Security Center in an EXPRESSCLUSTER environment, you must disable automatic failover for the EXPRESSCLUSTER, and then upgrade Security Center on the active and standby servers.
 
 ### Before you begin
 
@@ -195,10 +194,25 @@ You must have the same ConfigurationFiles folder on both the mirrored and local 
 ### To upgrade Security Center
 
 1. Open *Cluster WebUI*.
-2. Prepare the status that the failover group is running on the primary server.
+
+   On the primary node, open *WebUI* of EXPRESSCLUSTER by opening a web browser and access to <http://localhost:29003>
+
+2. Confirm that the failover group is running on the primary server.
+
+   ![WebUI1](image3.png)
+
 3. Stop *service-MSSQL*, then *service-GenetecServer* and *service-GenetecWatchdog* are also stopped and are in Offline status, and *md1* remains in *Online* status.
-4. Upgrade the Security Center.
+
+   ![WebUI2](image4.png)
+
+4. Upgrade the Security Center on the primary server.
 5. Move the failover group to the secondary server, then confirm the mirror disk resource *md1* only in active status.
+
+   ![WebUI3](image5.png)
+
+6. Upgrade the Security Center on the secondary server.
+7. Start *service-Genetec*, then all the resources become online.
+8. Move the failover group to the primary server.
 
 ## Configuring services for the cluster
 
