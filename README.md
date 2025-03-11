@@ -391,5 +391,40 @@ clpfwctrl --add
   2. Power on the primary server. Then see if the server is successfully comeback to the cluster.
   3. Move back the failover group.
 
----
-Copyright Miyamoto Kazuyuki 2025
+## Upgrading EXPRESSCLUSTER
+
+### Notes
+
+- EXPRESSCLUSTER X 4 obsoletes *armload*/*armkill* commands.
+
+  If you have been using a *script resource* which contains *armload*/*armkill* command in the *start.bat*/*stop.bat* for controlling three services of *Genetec™ Server*, *Genetec Watchdog* and *SQL Server* services, you need to replace the *script resource* into three *service resources*.
+
+- EXPRESSCLUSTER X 5 requires a Cluster partition of 1 GB for a *Mirror disk* resource, not 64 MB.
+
+  If you have been using the Cluster partition having the size less than 1 GB, you need to prepare new partition of 1 GB (or more).
+
+### Steps
+
+1. Before the upgrade, open EXPRESSCLUSTER *WebManager* and save the existing configuration files (*clp.conf* and *scripts*).
+2. Upgrade EXPRESSCLUSTER.
+3. Open EXPRESSCLUSTER *WebUI* and import the saved configuration.
+4. Delete the script resource and add the service resources for *Genetec™ Server*, *Genetec Watchdog* and *SQL Server* services if required. Note about the dependency described [here](#creating-the-cluster).
+5. Change the *Cluster Partition Drive Letter* in the *Resource Properties* of the *Mirror disk* resource if required.
+
+## Legal notice
+
+©2025 NEC. All rights reserved.
+
+The contents of this guide are furnished for informational use only and are subject to change without notice.
+NEC assumes no responsibility or liability for any errors or inaccuracies that may appear in the informational content contained in this guide.
+
+This publication may not be copied, modified, or reproduced in any form or for any purpose, nor can any derivative works be created there from without NEC’s prior written consent.
+
+NEC reserves the right to revise and improve its products as it sees fit. This document describes the state of a product at the time of document’s last revision, and may not reflect the product at all times in the future.
+
+In no event shall NEC be liable to any person or entity with respect to any loss or damage that is incidental to or consequential upon the instructions found in this document or the computer software and hardware products described herein.
+
+EXPRESSCLUSTER® is a registered trademark of NEC Corporation.
+Trademarks used in this document may be trademarks of the manufacturers or vendors of the respective products.
+
+All specifications are subject to change without notice.
