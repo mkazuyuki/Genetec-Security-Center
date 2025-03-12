@@ -2,7 +2,37 @@
 
 This guide describes how to install and upgrade Genetec Security Center on a high availability cluster using EXPRESSCLUSTER.
 
-## Versions
+## Table of contents
+
+[Versions of products](#versions-of-products)
+
+[EXPRESSCLUSTER for Security Center](#expresscluster-for-security-center)
+
+[EXPRESSCLUSTER terminology](#expresscluster-terminology)
+
+[Server requirements for EXPRESSCLUSTER](#server-requirements-for-expresscluster)
+
+[Planning checklist for EXPRESSCLUSTER](#planning-checklist-for-expresscluster)
+
+[Preparing servers for clustering](#preparing-servers-for-clustering)
+
+[Best practices for installing EXPRESSCLUSTER](#best-practices-for-installing-expresscluster)
+
+[Installing Security Center Server for EXPRESSCLUSTER](#installing-security-center-server-for-expresscluster)
+
+[Upgrading Security Center](#upgrading-security-center)
+
+[Configuring services for the cluster](#configuring-services-for-the-cluster)
+
+[Configuring EXPRESSCLUSTER](#configuring-expresscluster)
+
+[Cluster configuration tests](#cluster-configuration-tests)
+
+[Upgrading EXPRESSCLUSTER](#upgrading-expresscluster)
+
+[Legal notice](#legal-notice)
+
+## Versions of products
 
 - Genetec Security Center 5.12
   - Microsoft SQL Server 2022 Express
@@ -17,7 +47,7 @@ Clustering ensures that your Security Center server’s configuration files and 
 A virtual IP address is used to accept incoming client connections. The cluster then monitors the active server’s hardware and software. If a failure is detected, the cluster replaces the active server with the standby server so that the system remains online.
 Clients do not know whether the active server or the standby server is managing the system as they are still connected to the same IP address.
 
-![Cluster structure](image1.png)
+![Cluster structure](image1.1.png)
 
 ## EXPRESSCLUSTER terminology
 
@@ -317,7 +347,10 @@ To configure the SQL Server for the cluster:
    6. Double-click the SQL Server (SQLEXPRESS) and set the Startup Type to Manual.
 2. In SQL Management Studio, you will need detach all Security Center databases before the database files can be moved to your mirrored data partition. Detaching a database removes it from the instance of the Microsoft SQL Server but leaves intact the database, with its data files and transaction log files.
    1. Open SQL Management Studio and connect to the Security Center database instance (by default the instance name is SQLEXPRESS)
+   ![SQL Server Management Studio - Connect to Server](image6.png)
    2. Right click on each one of the Security Center databases and select `Task` > `Detach`.
+   ![SQL Server Management Studio - Detach database](image7.png)
+   
 3. Move the Security Center \*.MDF and \*.LDF database files from their default folder (*C:\Program Files\Microsoft SQL Server\MSSQL16.SQLEXPRESS\MSSQL\DATA*) to the SQL folder on the mirror partition created earlier (*N:/MSSQL/DATA*).
 4. Stop the SQL service on both servers.
 5. Using SQL Server Configuration Manager, modify the SQL startup parameters for the master database on both servers.
@@ -325,20 +358,22 @@ To configure the SQL Server for the cluster:
    1. Open your SQL Server Configuration Manager.
    2. Select **SQL Server Services** in the pane on the left.
    3. Right-click on **SQL Server (SQLEXPRESS)** and select **Properties**.
+      ![SQL Server Configuration Manager](image8.png)
    4. Select the **Advanced** tab in the **SQL Server (SQLEXPRESS) Properties** window.
    5. Double click and modify the field **Startup Parameters** to point to the new master database path.
-
+      ![SQL Server Configuration Manager - SQL Server Properties](image9.png)
       In this example I have modified the startup parameters to: `-dN:\MSSQL\DATA\master.mdf;-eN:\MSSQL\Log\ERRORLOG;-lN:\MSSQL\DATA\mastlog.ldf`,
       whereby the field points to the new (mirrored) drive and folder path of our master database (*N:/MSSQL/Data*).
 
-6. Move the master database (master.mdf and master.ldf) for the active server to the SQL folder on the
-mirror partition created earlier (*N:/MSSQL/DATA*). Delete the master database (master.mdf and master.ldf)
-on the standby server (it will be replicated from the active server).
+6. Move the master database (master.mdf and master.ldf) for the active server to the SQL folder on the mirror partition created earlier (*N:/MSSQL/DATA*). Delete the master database (master.mdf and master.ldf) on the standby server (it will be replicated from the active server).
    - Do the same for *model*, *msdb*, and *tempdb* databases.
 7. Restart SQL service on both servers.
 8. Reconnect SQL Management studio to SQL server for the active server.
 9. Re-attach the Security Center databases.
+
    - Right-click on **Databases** and select **Attach**.
+     ![SQL Server Management Studio - Attach database](image10.png)
+
 10. When prompted to point to the database to be attached, use the **Add** button to browse to the new path of
 your (moved) master database.
 
@@ -350,7 +385,7 @@ your (moved) master database.
 
 ## Configuring EXPRESSCLUSTER
 
-On both servers, copy ECX license files, then run ECX installer.
+On both servers, put ECX license files, then run ECX installer.
 
 After the ECX installation, issue the following commands in the command prompt to install the cluster license files and to add the firewall rules.
 
@@ -365,14 +400,17 @@ clpfwctrl --add
 
 ### Creating the cluster
 
-1. On the active node, open *WebUI* of EXPRESSCLUSTER by opening a web browser and access to <http://localhost:29003>
+1. On the active node, open EXPRESSCLUSTER *WebUI*.
+
+   Open a web browser and access to <http://localhost:29003>
+
 2. Start *Cluster generation wizard*.
 
    Configure one failover group and add the following resources to the group.
 
    - Mirror disk resource. Name it *md1*.
    - Service resource for *SQL Server (SQLEXPRESS)* service. Name it *service-MSSQL*.
-   - Service resource for *Genetec Watchdog* service. Name it *service-GenetecWatchdog*
+   - Service resource for *Genetec Watchdog* service. Name it *service-GenetecWatchdog*.
 
      Configure it to depend on the service resource for *SQL Server* service.
 
@@ -384,7 +422,7 @@ clpfwctrl --add
 
 ## Cluster configuration tests
 
-- If you see a trouble for database connection. On active server, open *Genetec Config Tool* > *System* > *Roles* > select each Roles > *Resources* > Try `localhost\SQLEXPRESS`
+- If you see a trouble on Security Center regarding database connection. On active server, open *Genetec Config Tool* > *System* > *Roles* > select each Roles > *Resources* > Try `localhost\SQLEXPRESS`
 - Move and move back the failover group between the servers.
 - A state transition test
   1. Power off the primary server. Then see if the failover is successfully processed.
@@ -407,6 +445,9 @@ clpfwctrl --add
 
 1. Before the upgrade, open EXPRESSCLUSTER *WebManager* and save the existing configuration files (*clp.conf* and *scripts*).
 2. Upgrade EXPRESSCLUSTER.
+
+   Uninstall the old and install new one.
+
 3. Open EXPRESSCLUSTER *WebUI* and import the saved configuration.
 4. Delete the script resource and add the service resources for *Genetec™ Server*, *Genetec Watchdog* and *SQL Server* services if required. Note about the dependency described [here](#creating-the-cluster).
 5. Change the *Cluster Partition Drive Letter* in the *Resource Properties* of the *Mirror disk* resource if required.
