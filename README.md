@@ -135,7 +135,7 @@ Before installing EXPRESSCLUSTER, you must prepare the servers.
 10. On each server, configure Private network card to use the same IP subnet.
 11. Disable all network card features of the *Private* NIC except TCP/IP version 4 (and, if it appears in the list, the driver).
    ![NIC Properties](image2.png)
-12. From the command line, test whether the two servers nodes can *ping* each other over their public interface and over their private interface.
+12. From the command line, test whether the two servers can *ping* each other over their public interface and over their private interface.
 <!--
 9. Order the Public and Private network interfaces as follows:
  **IMPORTANT**:  The network interface on the Private network must be Window’s first available network
@@ -217,7 +217,7 @@ To upgrade Security Center in an EXPRESSCLUSTER environment, you must disable au
 You must have the same ConfigurationFiles folder on both the mirrored and local hard drives.
 
 1. As a backup, Copy the ConfigurationFiles folder from the mirrored drive (N:Genetec Security Center 5.12\ConfigurationFiles) to your local drive (C:\Program Files (x86)\Genetec Security Center 5.12\ConfigurationFiles).
-2. Repeat for each node in your NEC cluster.
+2. Repeat for each server in your cluster.
 
    **NOTE***: In this example “N:” corresponds to the drive letter assigned to your mirrored data partition. The actual drive letter will depend on your EXPRESSCLUSTER.
 
@@ -225,7 +225,7 @@ You must have the same ConfigurationFiles folder on both the mirrored and local 
 
 1. Open *Cluster WebUI*.
 
-   On the primary node, open *WebUI* of EXPRESSCLUSTER by opening a web browser and access to <http://localhost:29003>
+   On the primary server, open *WebUI* of EXPRESSCLUSTER by opening a web browser and access to <http://localhost:29003>
 
 2. Confirm that the failover group is running on the primary server.
 
@@ -350,7 +350,6 @@ To configure the SQL Server for the cluster:
    ![SQL Server Management Studio - Connect to Server](image6.png)
    2. Right click on each one of the Security Center databases and select `Task` > `Detach`.
    ![SQL Server Management Studio - Detach database](image7.png)
-   
 3. Move the Security Center \*.MDF and \*.LDF database files from their default folder (*C:\Program Files\Microsoft SQL Server\MSSQL16.SQLEXPRESS\MSSQL\DATA*) to the SQL folder on the mirror partition created earlier (*N:/MSSQL/DATA*).
 4. Stop the SQL service on both servers.
 5. Using SQL Server Configuration Manager, modify the SQL startup parameters for the master database on both servers.
@@ -374,8 +373,7 @@ To configure the SQL Server for the cluster:
    - Right-click on **Databases** and select **Attach**.
      ![SQL Server Management Studio - Attach database](image10.png)
 
-10. When prompted to point to the database to be attached, use the **Add** button to browse to the new path of
-your (moved) master database.
+10. When prompted to point to the database to be attached, use the **Add** button to browse to the new path of your (moved) master database.
 
     **IMPORTANT**: This step needs to be performed on the standby server as well but it is not possible at this
     point. Once the cluster configuration has been completed, you will need to force a failover to the standby
@@ -400,7 +398,7 @@ clpfwctrl --add
 
 ### Creating the cluster
 
-1. On the active node, open EXPRESSCLUSTER *WebUI*.
+1. On either of the servers, open EXPRESSCLUSTER *WebUI*.
 
    Open a web browser and access to <http://localhost:29003>
 
