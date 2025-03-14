@@ -47,7 +47,7 @@ Clustering ensures that your Security Center server’s configuration files and 
 A virtual IP address is used to accept incoming client connections. The cluster then monitors the active server’s hardware and software. If a failure is detected, the cluster replaces the active server with the standby server so that the system remains online.
 Clients do not know whether the active server or the standby server is managing the system as they are still connected to the same IP address.
 
-![Cluster structure](image1.1.png)
+![Cluster structure](assets/image1.1.png)
 
 ## EXPRESSCLUSTER terminology
 
@@ -134,7 +134,7 @@ Before installing EXPRESSCLUSTER, you must prepare the servers.
 9. On each server, configure the Public network card to use the same IP subnet.
 10. On each server, configure Private network card to use the same IP subnet.
 11. Disable all network card features of the *Private* NIC except TCP/IP version 4 (and, if it appears in the list, the driver).
-   ![NIC Properties](image2.png)
+   ![NIC Properties](assets/image2.png)
 12. From the command line, test whether the two servers can *ping* each other over their public interface and over their private interface.
 <!--
 9. Order the Public and Private network interfaces as follows:
@@ -229,16 +229,16 @@ You must have the same ConfigurationFiles folder on both the mirrored and local 
 
 2. Confirm that the failover group is running on the primary server.
 
-   ![WebUI1](image3.png)
+   ![WebUI1](assets/image3.png)
 
 3. Stop *service-MSSQL*, then *service-GenetecServer* and *service-GenetecWatchdog* are also stopped and are in Offline status, and *md1* remains in *Online* status.
 
-   ![WebUI2](image4.png)
+   ![WebUI2](assets/image4.png)
 
 4. Upgrade the Security Center on the primary server.
 5. Move the failover group to the secondary server, then confirm the mirror disk resource *md1* only in active status.
 
-   ![WebUI3](image5.png)
+   ![WebUI3](assets/image5.png)
 
 6. Upgrade the Security Center on the secondary server.
 7. Start *service-Genetec*, then all the resources become online.
@@ -347,9 +347,9 @@ To configure the SQL Server for the cluster:
    6. Double-click the SQL Server (SQLEXPRESS) and set the Startup Type to Manual.
 2. In SQL Management Studio, you will need detach all Security Center databases before the database files can be moved to your mirrored data partition. Detaching a database removes it from the instance of the Microsoft SQL Server but leaves intact the database, with its data files and transaction log files.
    1. Open SQL Management Studio and connect to the Security Center database instance (by default the instance name is SQLEXPRESS)
-   ![SQL Server Management Studio - Connect to Server](image6.png)
+   ![SQL Server Management Studio - Connect to Server](assets/image6.png)
    2. Right click on each one of the Security Center databases and select `Task` > `Detach`.
-   ![SQL Server Management Studio - Detach database](image7.png)
+   ![SQL Server Management Studio - Detach database](assets/image7.png)
 3. Move the Security Center \*.MDF and \*.LDF database files from their default folder (*C:\Program Files\Microsoft SQL Server\MSSQL16.SQLEXPRESS\MSSQL\DATA*) to the SQL folder on the mirror partition created earlier (*N:/MSSQL/DATA*).
 4. Stop the SQL service on both servers.
 5. Using SQL Server Configuration Manager, modify the SQL startup parameters for the master database on both servers.
@@ -357,10 +357,10 @@ To configure the SQL Server for the cluster:
    1. Open your SQL Server Configuration Manager.
    2. Select **SQL Server Services** in the pane on the left.
    3. Right-click on **SQL Server (SQLEXPRESS)** and select **Properties**.
-      ![SQL Server Configuration Manager](image8.png)
+      ![SQL Server Configuration Manager](assets/image8.png)
    4. Select the **Advanced** tab in the **SQL Server (SQLEXPRESS) Properties** window.
    5. Double click and modify the field **Startup Parameters** to point to the new master database path.
-      ![SQL Server Configuration Manager - SQL Server Properties](image9.png)
+      ![SQL Server Configuration Manager - SQL Server Properties](assets/image9.png)
       In this example I have modified the startup parameters to: `-dN:\MSSQL\DATA\master.mdf;-eN:\MSSQL\Log\ERRORLOG;-lN:\MSSQL\DATA\mastlog.ldf`,
       whereby the field points to the new (mirrored) drive and folder path of our master database (*N:/MSSQL/Data*).
 
@@ -371,7 +371,7 @@ To configure the SQL Server for the cluster:
 9. Re-attach the Security Center databases.
 
    - Right-click on **Databases** and select **Attach**.
-     ![SQL Server Management Studio - Attach database](image10.png)
+     ![SQL Server Management Studio - Attach database](assets/image10.png)
 
 10. When prompted to point to the database to be attached, use the **Add** button to browse to the new path of your (moved) master database.
 
