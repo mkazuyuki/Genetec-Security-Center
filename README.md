@@ -134,7 +134,7 @@ Before installing EXPRESSCLUSTER, you must prepare the servers.
 9. On each server, configure the Public network card to use the same IP subnet.
 10. On each server, configure Private network card to use the same IP subnet.
 11. Disable all network card features of the *Private* NIC except TCP/IP version 4 (and, if it appears in the list, the driver).
-   ![NIC Properties](assets/image2.png)
+    ![NIC Properties](assets/image2.png)
 12. From the command line, test whether the two servers can *ping* each other over their public interface and over their private interface.
 <!--
 9. Order the Public and Private network interfaces as follows:
